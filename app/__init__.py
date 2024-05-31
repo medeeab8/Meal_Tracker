@@ -12,6 +12,9 @@ def create_app():
     db.init_app(app)
     ma.init_app(app)
     
+    from .routes import bp as routes_bp
+    app.register_blueprint(routes_bp)
+    
     with app.app_context():
         from . import routes
         db.create_all()

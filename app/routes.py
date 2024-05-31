@@ -2,16 +2,22 @@ from flask import request, jsonify, Blueprint
 from . import db
 from .models import Meal
 from .schemas import meal_schema, meals_schema
+from datetime import datetime
 
 bp = Blueprint('routes', __name__)
 
-@bp.route('/meals', methods=['POST'])
+@bp.route('/')
+def index():
+  return "Hello, world!"
+
+@bp.route('/add_meal', methods=['POST'])
 def add_meal():
+    
     name = request.json['name']
     description = request.json.get('description', '')
     calories = request.json['calories']
-    date = request.json.get('date', datetime.utcnow().strftime('%Y-%m-%d'))
-    
+    date = request.json.get('date', datetime.now().strftime('%Y-%m-%d'))
+
     new_meal = Meal(name=name, description=description, calories=calories, date=date)
     db.session.add(new_meal)
     db.session.commit()

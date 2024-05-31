@@ -18,7 +18,7 @@ def test_get_meals(client):
     assert response.status_code == 200
 
 def test_add_meal(client):
-    response = client.post('/meals', json={
+    response = client.post('/add_meal', json={
         'name': 'Breakfast',
         'description': 'Eggs and toast',
         'calories': 350,
