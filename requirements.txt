@@ -1,0 +1,1 @@
+RESTful API to manage a user's nutrition and meals. The API should allow users to perform CRUD operations on meals and track their daily caloric intake. Each meal will have properties like name, description, calories, and date.
