@@ -62,17 +62,24 @@ def get_meal(id):
 @bp.route('/meals/<int:id>', methods=['PUT'])
 def update_meal(id):
     meal = Meal.query.get_or_404(id)
+
+    json_data = request.json
     
-    name = request.json['name']
-    description = request.json.get('description', meal.description)
-    calories = request.json['calories']
-    date = request.json.get('date', meal.date)
+    if 'name' in json_data:
+        meal.name = json_data['name']
+    if 'username' in json_data:
+        meal.username = json_data['username']
+    if 'description' in json_data:
+        meal.description = json_data['description']
+    if 'calories' in json_data:
+        meal.calories = json_data['calories']
+    if 'date' in json_data:
+        meal.date = json_data['date']
     
-    meal.name = name
-    meal.description = description
-    meal.calories = calories
-    meal.date = date
-    
+    existing_user = User.query.filter_by(username=meal.username).first()
+    if not existing_user:
+        return jsonify({"error": f"Username '{meal.username}' does not exist. Please register first."}), 400
+
     db.session.commit()
     
     return meal_schema.jsonify(meal)
@@ -106,6 +113,38 @@ def add_user():
     db.session.commit()
 
     return user_schema.jsonify(new_user)
+
+@bp.route('/update_user/<int:id>', methods=['PUT'])
+def update_user(id):
+    user = User.query.get_or_404(id)
+
+    json_data = request.json
+    tdee_reassession = False
+
+    if 'username' in json_data:
+        user.username = json_data['username']
+    if 'height' in json_data and user.height != json_data['height']:
+        user.height = json_data['height']
+        tdee_reassession = True
+    if 'weight' in json_data and user.weight != json_data['weight']:
+        user.weight = json_data['weight']
+        tdee_reassession = True
+    if 'activity_level' in json_data and user.activity_level != json_data['activity_level']:
+        user.activity_level = json_data['activity_level']
+        tdee_reassession = True
+
+    if tdee_reassession:
+        tdee = calculate_tdee(user.height, user.weight, user.activity_level)
+        user.tdee = tdee
+        message = "TDEE was reassessed for this user!"
+    else:
+        message = "User updated successfuly!"
+
+    db.session.commit()
+
+    return jsonify({
+        "message":message,
+        "user":user_schema.dump(user)})
 
 @bp.errorhandler(404)
 def not_found(error):
