@@ -17,15 +17,37 @@ def index():
 def add_meal():
     
     name = request.json['name']
+    username = request.json['username']
     description = request.json.get('description', '')
     calories = request.json['calories']
     date = request.json.get('date', datetime.now().strftime('%Y-%m-%d'))
 
-    new_meal = Meal(name=name, description=description, calories=calories, date=date)
+    existing_user = User.query.filter_by(username=username).first()
+    if not existing_user:
+        return jsonify({"error": f"Username '{username}' does not exist. Please register first."}), 400
+
+    new_meal = Meal(name=name, username=username, description=description, calories=calories, date=date)
     db.session.add(new_meal)
     db.session.commit()
     
-    return meal_schema.jsonify(new_meal)
+    total_calories_consumed = db.session.query(db.func.sum(Meal.calories)).filter_by(username=username, date=date).scalar()
+    
+    if total_calories_consumed is None:
+        total_calories_consumed = 0
+
+    remaining_calories = existing_user.tdee - total_calories_consumed
+
+    if remaining_calories > 0:
+        message = "Meal added successfully."
+    else:
+        message = f"The daily TDEE has been surpassed by {abs(remaining_calories)} calories."
+        remaining_calories = 0
+
+    return jsonify({
+        "message": message,
+        "meal": meal_schema.dump(new_meal),
+        "remaining_calories": remaining_calories
+    })
 
 @bp.route('/meals', methods=['GET'])
 def get_meals():
@@ -70,9 +92,13 @@ def add_user():
     weight = request.json['weight']
     activity_level = request.json['activity_level']
 
+    existing_user = User.query.filter_by(username=username).first()
+    if existing_user:
+        return jsonify({"error": f"Username '{username}' already exists"}), 400
+
     # Calculate TDEE
     tdee = calculate_tdee(height, weight, activity_level)
-    print(tdee)
+
     # Create a new user
     new_user = User(username=username, height=height, weight=weight, activity_level=activity_level, tdee=tdee)
 
