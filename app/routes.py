@@ -1,7 +1,10 @@
 from flask import request, jsonify, Blueprint
 from . import db
 from .models import Meal
+from .models import User
 from .schemas import meal_schema, meals_schema
+from .schemas import user_schema, users_schema
+from .utils import calculate_tdee
 from datetime import datetime
 
 bp = Blueprint('routes', __name__)
@@ -59,6 +62,24 @@ def delete_meal(id):
     db.session.commit()
     
     return '', 204
+
+@bp.route('/add_user', methods=['POST'])
+def add_user():
+    username = request.json['username']
+    height = request.json['height']
+    weight = request.json['weight']
+    activity_level = request.json['activity_level']
+
+    # Calculate TDEE
+    tdee = calculate_tdee(height, weight, activity_level)
+    print(tdee)
+    # Create a new user
+    new_user = User(username=username, height=height, weight=weight, activity_level=activity_level, tdee=tdee)
+
+    db.session.add(new_user)
+    db.session.commit()
+
+    return user_schema.jsonify(new_user)
 
 @bp.errorhandler(404)
 def not_found(error):

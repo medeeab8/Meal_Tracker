@@ -13,3 +13,4 @@ class User(db.Model):
     height = db.Column(db.Integer, nullable=False)  # height in cm
     weight = db.Column(db.Integer, nullable=False)  # weight in kg
     activity_level = db.Column(db.Integer, nullable=False)  # activity level from 1 to 5
+    tdee = db.Column(db.Integer, nullable=True)
