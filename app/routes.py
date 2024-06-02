@@ -49,21 +49,27 @@ def add_meal():
         "remaining_calories": remaining_calories
     })
 
-@bp.route('/meals', methods=['GET'])
-def get_meals():
-    meals = Meal.query.all()
+@bp.route('/meals/<username>', methods=['GET'])
+def get_meals(username): 
+    if username:
+        meals = Meal.query.filter_by(username=username).all()
+    else:
+        meals = Meal.query.all()
     return meals_schema.jsonify(meals)
 
-@bp.route('/meals/<int:id>', methods=['GET'])
+@bp.route('/get_meal/<int:id>', methods=['GET'])
 def get_meal(id):
     meal = Meal.query.get_or_404(id)
     return meal_schema.jsonify(meal)
 
-@bp.route('/meals/<int:id>', methods=['PUT'])
+@bp.route('/update_meal/<int:id>', methods=['PUT'])
 def update_meal(id):
     meal = Meal.query.get_or_404(id)
 
     json_data = request.json
+
+    if 'username' not in json_data or json_data['username'] != meal.username:
+        return jsonify({"error": "You are not authorized to update this meal."}), 403
     
     if 'name' in json_data:
         meal.name = json_data['name']
