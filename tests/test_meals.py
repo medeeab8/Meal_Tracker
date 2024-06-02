@@ -12,12 +12,32 @@ def client():
     with app.app_context():
         db.create_all()
         yield client
-        # Tear down the database tables after the tests are done
         db.drop_all()
 
-def test_get_meals(client):
-    response = client.get('/meals')
+def test_get_meals_by_username(client):
+    user = User(username='john_doe', height=175, weight=70, activity_level=2)
+    db.session.add(user)
+    db.session.commit()
+
+    meal1 = Meal(name='Grilled Chicken Salad', username='john_doe', description='Grilled chicken breast with mixed greens and vinaigrette', calories=350, date='2024-06-02')
+    meal2 = Meal(name='Pasta Carbonara', username='john_doe', description='Spaghetti with creamy sauce, bacon, and parmesan cheese', calories=600, date='2024-06-02')
+    db.session.add(meal1)
+    db.session.add(meal2)
+    db.session.commit()
+
+    response = client.get('/meals/john_doe')
     assert response.status_code == 200
+
+    meals = response.get_json()
+    assert len(meals) == 2
+    assert meals[0]['name'] == 'Grilled Chicken Salad'
+    assert meals[1]['name'] == 'Pasta Carbonara'
+
+    response = client.get('/meals/nonexistent_user')
+    assert response.status_code == 200
+
+    meals = response.get_json()
+    assert len(meals) == 0
 
 def test_add_meal(client):
     test_user = User(username='testuser', height=180, weight=75, activity_level=3, tdee=2500)
@@ -71,7 +91,7 @@ def test_get_meal(client):
     db.session.add(test_meal)
     db.session.commit()
 
-    response = client.get(f'/meals/{test_meal.id}')
+    response = client.get(f'/get_meal/{test_meal.id}')
 
     assert response.status_code == 200
     response_data = json.loads(response.data)
@@ -81,29 +101,44 @@ def test_get_meal(client):
     assert response_data['date'] == '2024-05-30'
 
 def test_update_meal(client):
-    test_user = User(username='testuser', height=180, weight=75, activity_level=3, tdee=2500)
-    db.session.add(test_user)
+    user = User(username='john_doe', height=175, weight=70, activity_level=2)
+    db.session.add(user)
     db.session.commit()
 
-    test_meal = Meal(name='Snack', username='testuser', description='Fruit salad', calories=150, date='2024-05-30')
-    db.session.add(test_meal)
+    meal = Meal(name='Grilled Chicken Salad', username='john_doe', description='Grilled chicken breast with mixed greens', calories=350, date='2024-06-02')
+    db.session.add(meal)
     db.session.commit()
 
-    update_data = {
-        'name': 'Updated Snack',
-        'description': 'Updated fruit salad',
-        'calories': 200,
-        'date': '2024-05-31'
-    }
-
-    response = client.put(f'/meals/{test_meal.id}', data=json.dumps(update_data), content_type='application/json')
-
+    response = client.put(f'/update_meal/{meal.id}', json={
+        'username': 'john_doe',
+        'name': 'Updated Chicken Salad',
+        'description': 'Updated description',
+        'calories': 400,
+        'date': '2024-06-03'
+    })
     assert response.status_code == 200
-    response_data = json.loads(response.data)
-    assert response_data['name'] == 'Updated Snack'
-    assert response_data['description'] == 'Updated fruit salad'
-    assert response_data['calories'] == 200
-    assert response_data['date'] == '2024-05-31'
+
+    updated_meal = response.get_json()
+    assert updated_meal['name'] == 'Updated Chicken Salad'
+    assert updated_meal['description'] == 'Updated description'
+    assert updated_meal['calories'] == 400
+    assert updated_meal['date'] == '2024-06-03'
+
+    response = client.put(f'/update_meal/{meal.id}', json={
+        'username': 'jane_doe',
+        'name': 'Unauthorized Update'
+    })
+    assert response.status_code == 403
+    error_message = response.get_json()
+    assert error_message['error'] == 'You are not authorized to update this meal.'
+
+    response = client.put(f'/update_meal/{meal.id}', json={
+        'username': 'non_existent_user',
+        'name': 'Update with non-existent user'
+    })
+    assert response.status_code == 403
+    error_message = response.get_json()
+    assert error_message['error'] == 'You are not authorized to update this meal.'
 
 def test_delete_meal(client):
     test_user = User(username='testuser', height=180, weight=75, activity_level=3, tdee=2500)
