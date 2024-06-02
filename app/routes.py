@@ -138,13 +138,21 @@ def update_user(id):
         user.tdee = tdee
         message = "TDEE was reassessed for this user!"
     else:
-        message = "User updated successfuly!"
+        message = "User updated successfully!"
 
     db.session.commit()
 
     return jsonify({
         "message":message,
         "user":user_schema.dump(user)})
+
+@bp.route('/delete_user/<int:id>', methods=['DELETE'])
+def delete_user(id):
+    user = User.query.get_or_404(id)
+    db.session.delete(user)
+    db.session.commit()
+    
+    return '', 204
 
 @bp.errorhandler(404)
 def not_found(error):
