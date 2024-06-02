@@ -64,6 +64,30 @@ Once the project is installed, you can interact with the API using tools like cU
 
 ### Examples
 
+- To create a user:
+
+    ```json
+    POST /add_user
+    {
+        "username": "michael_brown",
+        "height": 170,
+        "weight": 68,
+        "activity_level": 1
+    }
+    ```
+    
+    - To update a user:
+
+    ```json
+    PUT /update_user/<int:id>
+    {
+        "username": "michael_brown",
+        "height": 170,
+        "weight": 80,
+        "activity_level": 1
+    }
+    ```
+
 - To add a meal:
 
     ```json
@@ -109,7 +133,7 @@ Once the project is installed, you can interact with the API using tools like cU
 
 - POST /add_meal: Add a new meal.
 - PUT /update_meal/<meal_id>: Update an existing meal.
-- GET /meals/: Get meals for a specific user.
+- GET /meals/<username>: Get meals for a specific user.
 - GET /get_meal/<meal_id>: Get details of a specific meal.
 - DELETE /meals/<meal_id>: Delete a meal.
 - POST /add_user: Add a new user.
