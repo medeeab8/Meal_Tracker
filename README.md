@@ -117,17 +117,9 @@ Once the project is installed, you can interact with the API using tools like cU
 - To get meals for a specific user:
 
     ```
-    GET /meals/?username=john_doe
+    GET /meals/<username>
     ```
 
-- To delete a meal:
-
-    ```json
-    DELETE /meals/<meal_id>
-    {
-        "meal_id": 1
-    }
-    ```
 
 ### Endpoints
 
