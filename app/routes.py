@@ -63,6 +63,11 @@ def get_meals(username):
         meals = Meal.query.filter_by(username=username).all()
     else:
         meals = Meal.query.all()
+
+    # Check if meals list is empty and return an error if no meals are found
+    if not meals:
+        return jsonify({'message': 'No meals found'}), 404
+    
     return meals_schema.jsonify(meals)
 
 # Route for retrieving a single meal by ID
@@ -114,8 +119,8 @@ def delete_meal(id):
     # Delete the meal from the database
     db.session.delete(meal)
     db.session.commit()
-    # Return empty response with 204 status code
-    return '', 204
+    # Return message with 204 status code
+    return jsonify({'message': 'Meal successfully deleted'}), 204
 
 # Route for adding a user
 @bp.route('/add_user', methods=['POST'])
@@ -190,8 +195,8 @@ def delete_user(id):
     # Delete the user from the database
     db.session.delete(user)
     db.session.commit()
-    # Return empty response with 204 status code
-    return '', 204
+    # Return message with 204 status code
+    return jsonify({'message': 'Meal successfully deleted'}), 204
 
 # Error handler for 404 Not Found errors
 @bp.errorhandler(404)
